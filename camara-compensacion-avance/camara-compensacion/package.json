@@ -1,0 +1,15 @@
+{
+  "name": "camara-compensacion",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Cámara de compensación de pagos entre cooperativas",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test test/",
+    "generar": "node scripts/generar.mjs",
+    "determinismo": "node scripts/determinismo.mjs",
+    "reproducir": "node scripts/reproducir.mjs"
+  },
+  "engines": { "node": ">=20" }
+}
