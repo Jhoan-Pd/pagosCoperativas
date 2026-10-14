@@ -111,18 +111,18 @@ function sesion() {
 }
 
 function desdeCiclo(d) {
+  const responder = (x) => (d.respuesta ? d.respuesta.postMessage(x) : ciclo.postMessage(x));
   if (d.tipo === 'aplicar') {
     const t = performance.now();
     const r = ing.aplicarResultado(d);
-    ing.recuperar();
-    ciclo.postMessage({ tipo: 'aplicado', ...r, ms: performance.now() - t });
+    responder({ tipo: 'aplicado', ...r, ms: performance.now() - t });
     enviarLote();
-    const estado = ing.exportarEstado({ hastaLote: ultimoLoteEnviado, sesion: sesion(), seqMax, reloj: d.ahora, ciclo: d.ciclo });
-    self.postMessage({ tipo: 'estado', estado, ciclo: d.ciclo }, [estado]);
-    publicar();
+    const estado = ing.exportarEstado({ hastaLote: ultimoLoteEnviado, sesion: sesion(), seqMax, reloj: d.ahora, ciclo: d.numero });
+    self.postMessage({ tipo: 'estado', estado, ciclo: d.numero, hastaLote: ultimoLoteEnviado, sesion: sesion() }, [estado]);
+    setTimeout(() => { ing.recuperar(); publicar(); }, 50);
   } else if (d.tipo === 'descartar') {
     ing.abrir(); ing.finalizarTardias(); ing.cerrar();
-    ciclo.postMessage({ tipo: 'descartado' });
+    responder({ tipo: 'descartado' });
   }
 }
 

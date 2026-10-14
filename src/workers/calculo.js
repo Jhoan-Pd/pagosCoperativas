@@ -1,7 +1,7 @@
-import { vistas, tomarFotografia, copiarSaldos, H, bytesNecesarios, N } from '../core/grafo.js';
+import { vistas, tomarFotografia, copiarSaldos, liberarFotografia, H, bytesNecesarios, N } from '../core/grafo.js';
 import { fusionar, tramos } from '../core/orden.js';
 import { calcularCiclo, huella } from '../core/ciclo.js';
-import { capturarEntrada, construirAuditoria } from '../core/auditoria.js';
+import { capturarEntrada, construirRegistro } from '../core/auditoria.js';
 import { corrida, CONFIGURACIONES, leerArchivo } from '../core/determinismo.js';
 import { mensajesDesdeCaptura } from '../core/mensajes.js';
 
@@ -79,13 +79,14 @@ async function cicloOficial(p) {
     const ta = performance.now();
     let aplicado = null;
     if (R.valido) {
-      const ranuras = new Int32Array(R.nFase1 + R.nSecuencia), claves = new Float64Array(ranuras.length);
+      const ranuras = new Int32Array(R.nFase1 + R.secuencia.length), claves = new Float64Array(ranuras.length);
       let x = 0;
       for (let q = 0; q < R.m; q++) if (R.decision[q]) { ranuras[x] = orden[q]; claves[x++] = g.clave[orden[q]]; }
       aplicado = await aIngesta({ tipo: 'aplicar', ranuras, claves, deltas: R.deltas, ahora: p.ahora, numero: p.numero }, [ranuras.buffer, claves.buffer]);
     } else {
       await aIngesta({ tipo: 'descartar', numero: p.numero });
     }
+    liberarFotografia(g, 0);
     t.aplicar = performance.now() - ta;
     t.total = performance.now() - t.inicio;
 
@@ -96,7 +97,7 @@ async function cicloOficial(p) {
       numero: p.numero, ahora: p.ahora, epoca: S, m: R.m, workers: K, estrategia: R.estrategia,
       valido: R.valido, invariantes: R.invariantes, huella: R.huella,
       fase1: R.fase1, comparacion: R.comparacion, resumen: R.resumen,
-      bloqueadores: R.bloqueadores, bloqueoMonto: Float64Array.from(R.bloqueoMonto),
+      bloqueadores: R.bloqueadores, bloqueoMonto: Float64Array.from(R.bloqueoPorNodo), circuitos: R.circuitosTop.slice(0, 120),
       tiempos: t, aplicado,
       memoria: { bytesGrafo, bytesPorCiclo: bytesGrafo * (K + 1), bytesAhorrados },
       dentroPresupuesto: t.total < 20000,
@@ -107,6 +108,7 @@ async function cicloOficial(p) {
     Atomics.store(g.cab, H.OFICIAL, 0);
     Atomics.notify(g.cab, H.OFICIAL);
     await aIngesta({ tipo: 'descartar', numero: p.numero });
+    liberarFotografia(g, 0);
     hub.postMessage({ tipo: 'aviso', texto: 'Error en el ciclo: ' + err.message });
   } finally {
     ocupado = false;
@@ -116,7 +118,7 @@ async function cicloOficial(p) {
 
 async function exportarAuditoria(p) {
   if (!ultimo) { hub.postMessage({ tipo: 'aviso', texto: 'Aún no hay un ciclo para auditar' }); return; }
-  const a = construirAuditoria(ultimo.cap, ultimo.R, ultimo.meta);
+  const a = construirRegistro(ultimo.cap, ultimo.R, { ...ultimo.meta, huella: ultimo.R.huella });
   const blob = new Blob([JSON.stringify(a)], { type: 'application/json' });
   hub.postMessage({ tipo: 'auditoria', para: p.para, blob, nombre: `auditoria-ciclo-${ultimo.meta.ciclo}.json` });
 }

@@ -2,7 +2,7 @@ import { CONCEPTOS } from './grafo.js';
 import { idDeClave } from './ids.js';
 
 export function mensajesDesdeCaptura(cap) {
-  const { m, col } = cap;
+  const { m, cols: col } = cap;
   const idx = Array.from({ length: m }, (_, p) => p);
   if (col.ranura) idx.sort((a, b) => col.ranura[a] - col.ranura[b]);
   return idx.map((p) => ({
