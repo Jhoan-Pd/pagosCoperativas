@@ -1,0 +1,605 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#101b25">
+    <meta name="description" content="Panel de simulación de compensación de pagos entre cooperativas.">
+    <title>Cámara de compensación | Pagos Cooperativas</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: #0b1118;
+        color: #edf4f6;
+        font-synthesis: none;
+        text-rendering: optimizeLegibility;
+        --panel: #111c26;
+        --panel-soft: #15232e;
+        --line: #253744;
+        --muted: #9aadb8;
+        --accent: #48d6b2;
+        --blue: #68b9f5;
+        --warning: #f4bf69;
+        --danger: #ff8585;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        min-width: 320px;
+        background:
+          radial-gradient(ellipse at 85% 0%, rgba(33, 111, 112, .19), transparent 38rem),
+          #0b1118;
+      }
+
+      button, input { font: inherit; }
+      button { cursor: pointer; }
+
+      .shell { width: min(1180px, calc(100% - 40px)); margin: 0 auto; }
+
+      header {
+        border-bottom: 1px solid rgba(151, 181, 195, .13);
+        background: rgba(11, 17, 24, .72);
+      }
+
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        min-height: 72px;
+      }
+
+      .brand { display: flex; align-items: center; gap: 12px; }
+      .brand-mark {
+        display: grid;
+        width: 38px;
+        height: 38px;
+        place-items: center;
+        border: 1px solid rgba(72, 214, 178, .36);
+        border-radius: 12px;
+        color: var(--accent);
+        background: rgba(72, 214, 178, .09);
+        font-size: 20px;
+      }
+      .brand-name { font-size: 14px; font-weight: 700; letter-spacing: .02em; }
+      .brand-caption { margin-top: 3px; color: var(--muted); font-size: 12px; }
+      .service-state { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); font-size: 12px; }
+      .state-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--warning); }
+      .state-dot.ready { background: var(--accent); box-shadow: 0 0 12px rgba(72, 214, 178, .65); }
+      .state-dot.error { background: var(--danger); }
+
+      main { padding: 52px 0 64px; }
+      .hero {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 28px;
+        margin-bottom: 28px;
+      }
+
+      .eyebrow {
+        margin: 0 0 12px;
+        color: var(--accent);
+        font-size: 11px;
+        font-weight: 750;
+        letter-spacing: .16em;
+        text-transform: uppercase;
+      }
+
+      h1 { max-width: 720px; margin: 0; font-size: clamp(30px, 4vw, 48px); line-height: 1.08; letter-spacing: -.04em; }
+      .intro { max-width: 700px; margin: 14px 0 0; color: var(--muted); font-size: 15px; line-height: 1.65; }
+
+      .run-form {
+        display: flex;
+        flex: 0 0 auto;
+        align-items: flex-end;
+        gap: 10px;
+        padding: 10px;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: var(--panel);
+      }
+      .field { display: grid; gap: 7px; }
+      .field label { color: var(--muted); font-size: 11px; }
+      .field input {
+        width: 128px;
+        padding: 10px 11px;
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        outline: none;
+        color: #fff;
+        background: #0b141c;
+      }
+      .field input:focus { border-color: var(--accent); }
+      .run-button {
+        min-height: 40px;
+        padding: 0 16px;
+        border: 0;
+        border-radius: 9px;
+        color: #09211c;
+        background: var(--accent);
+        font-size: 13px;
+        font-weight: 750;
+      }
+      .run-button:hover { background: #73e8c8; }
+      .run-button:disabled { cursor: wait; opacity: .65; }
+
+      .notice {
+        display: none;
+        margin: 0 0 20px;
+        padding: 13px 16px;
+        border: 1px solid rgba(255, 133, 133, .35);
+        border-radius: 11px;
+        color: #ffc2c2;
+        background: rgba(115, 38, 42, .17);
+        font-size: 13px;
+      }
+      .notice.visible { display: block; }
+
+      .section-heading {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 16px;
+        margin: 34px 0 14px;
+      }
+      h2 { margin: 0; font-size: 16px; letter-spacing: -.01em; }
+      .section-note { color: var(--muted); font-size: 12px; }
+
+      .metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 13px; }
+      .metric, .panel {
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: linear-gradient(145deg, rgba(21, 35, 46, .96), rgba(15, 25, 34, .96));
+      }
+      .metric { min-height: 126px; padding: 18px; }
+      .metric-label { color: var(--muted); font-size: 12px; }
+      .metric-value { margin-top: 14px; font-size: clamp(22px, 2.5vw, 30px); font-weight: 740; letter-spacing: -.04em; }
+      .metric-foot { margin-top: 7px; color: #78909d; font-size: 11px; }
+      .value-accent { color: var(--accent); }
+      .value-blue { color: var(--blue); }
+      .value-warning { color: var(--warning); }
+
+      .columns { display: grid; grid-template-columns: 1.05fr .95fr; gap: 14px; }
+      .panel { padding: 20px; }
+      .panel-title { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 18px; }
+      .badge {
+        padding: 5px 8px;
+        border: 1px solid rgba(72, 214, 178, .25);
+        border-radius: 99px;
+        color: var(--accent);
+        background: rgba(72, 214, 178, .08);
+        font-size: 10px;
+        font-weight: 700;
+      }
+      .data-list { display: grid; gap: 0; }
+      .data-list.compact { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 36px; }
+      .data-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 11px 0;
+        border-top: 1px solid rgba(151, 181, 195, .09);
+        font-size: 12px;
+      }
+      .data-row:first-child { border-top: 0; }
+      .data-label { color: var(--muted); }
+      .data-value { text-align: right; font-weight: 650; font-variant-numeric: tabular-nums; }
+      .bar-track { height: 7px; overflow: hidden; margin: 3px 0 13px; border-radius: 8px; background: #263844; }
+      .bar-fill { height: 100%; border-radius: inherit; background: linear-gradient(90deg, #35c7a5, #79e1be); transition: width .3s ease; }
+
+      .invariants { display: grid; gap: 10px; }
+      .invariant {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 12px;
+        border: 1px solid rgba(151, 181, 195, .1);
+        border-radius: 10px;
+        background: rgba(7, 14, 20, .28);
+      }
+      .check {
+        display: grid;
+        flex: 0 0 20px;
+        width: 20px;
+        height: 20px;
+        place-items: center;
+        border-radius: 50%;
+        color: #08251d;
+        background: var(--accent);
+        font-size: 12px;
+        font-weight: 800;
+      }
+      .check.fail { color: #2b0808; background: var(--danger); }
+      .invariant-name { font-size: 12px; font-weight: 650; }
+      .invariant-detail { margin-top: 4px; color: var(--muted); font-size: 11px; line-height: 1.5; }
+
+      .table-wrap { overflow-x: auto; }
+      table { width: 100%; border-collapse: collapse; font-size: 12px; }
+      th, td { padding: 11px 10px; border-bottom: 1px solid rgba(151, 181, 195, .1); text-align: left; white-space: nowrap; }
+      th { color: var(--muted); font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; }
+      td { font-variant-numeric: tabular-nums; }
+      td:last-child, th:last-child { text-align: right; }
+      .empty { padding: 18px 0; color: var(--muted); font-size: 12px; }
+
+      .pipeline { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+      .step { position: relative; min-height: 130px; padding: 16px; }
+      .step-number { color: var(--accent); font-size: 10px; font-weight: 750; letter-spacing: .1em; }
+      .step h3 { margin: 10px 0 7px; font-size: 13px; }
+      .step p { margin: 0; color: var(--muted); font-size: 11px; line-height: 1.55; }
+      .details-panel { padding: 0; overflow: hidden; }
+      details summary { padding: 17px 20px; cursor: pointer; font-size: 12px; font-weight: 650; list-style-position: inside; }
+      details summary::marker { color: var(--accent); }
+      pre {
+        max-height: 420px;
+        overflow: auto;
+        margin: 0;
+        padding: 0 20px 20px;
+        color: #b8d2dc;
+        font-size: 11px;
+        line-height: 1.55;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+      }
+      footer { padding: 22px 0 34px; border-top: 1px solid rgba(151, 181, 195, .1); color: #8296a2; font-size: 11px; }
+      .footer-content { display: flex; justify-content: space-between; gap: 18px; }
+      a { color: var(--accent); text-decoration: none; }
+      a:hover { text-decoration: underline; }
+
+      @media (max-width: 850px) {
+        .hero { align-items: flex-start; flex-direction: column; }
+        .run-form { width: 100%; }
+        .columns { grid-template-columns: 1fr; }
+      }
+      @media (max-width: 620px) {
+        .shell { width: min(100% - 28px, 1180px); }
+        main { padding-top: 34px; }
+        .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+        .metric { min-height: 110px; padding: 14px; }
+        .metric-value { margin-top: 11px; font-size: 22px; }
+        .pipeline { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .data-list.compact { grid-template-columns: 1fr; }
+        .topbar { min-height: 62px; }
+        .service-state { font-size: 0; }
+        .service-state .state-dot { width: 9px; height: 9px; }
+        .footer-content { flex-direction: column; }
+      }
+      @media (max-width: 390px) {
+        .run-form { align-items: stretch; flex-direction: column; }
+        .field input { width: 100%; }
+        .pipeline { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="shell topbar">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true">↔</div>
+          <div>
+            <div class="brand-name">Pagos Cooperativas</div>
+            <div class="brand-caption">Cámara de compensación</div>
+          </div>
+        </div>
+        <div class="service-state" aria-live="polite">
+          <span id="state-dot" class="state-dot"></span>
+          <span id="service-label">Conectando con el motor</span>
+        </div>
+      </div>
+    </header>
+
+    <main class="shell">
+      <section class="hero">
+        <div>
+          <p class="eyebrow">Simulación de liquidación intercooperativa</p>
+          <h1>Compensación de pagos, con resultados verificables.</h1>
+          <p class="intro">Ejecuta el motor determinista de compensación y consulta el flujo procesado, los montos liquidados, las obligaciones aplazadas y las invariantes contables.</p>
+        </div>
+        <form id="run-form" class="run-form">
+          <div class="field">
+            <label for="limit">Operaciones a generar</label>
+            <input id="limit" type="number" min="200" max="5000" step="100" value="1200">
+          </div>
+          <button id="run-button" class="run-button" type="submit">Ejecutar simulación</button>
+        </form>
+      </section>
+
+      <div id="error-notice" class="notice" role="alert"></div>
+
+      <section aria-labelledby="overview-title">
+        <div class="section-heading">
+          <h2 id="overview-title">Resultado de la ejecución</h2>
+          <span id="run-meta" class="section-note">Esperando resultados…</span>
+        </div>
+        <div class="metrics">
+          <article class="metric">
+            <div class="metric-label">Mensajes procesados</div>
+            <div id="metric-messages" class="metric-value">—</div>
+            <div id="metric-messages-foot" class="metric-foot">Incluye depósitos de liquidez</div>
+          </article>
+          <article class="metric">
+            <div class="metric-label">Obligaciones ejecutadas</div>
+            <div id="metric-executed" class="metric-value value-accent">—</div>
+            <div id="metric-executed-foot" class="metric-foot">Pagos liquidados</div>
+          </article>
+          <article class="metric">
+            <div class="metric-label">Monto liquidado</div>
+            <div id="metric-settled" class="metric-value value-blue">—</div>
+            <div class="metric-foot">Unidades monetarias</div>
+          </article>
+          <article class="metric">
+            <div class="metric-label">Obligaciones aplazadas</div>
+            <div id="metric-postponed" class="metric-value value-warning">—</div>
+            <div id="metric-postponed-foot" class="metric-foot">Pendientes por liquidez</div>
+          </article>
+        </div>
+      </section>
+
+      <section>
+        <div class="section-heading">
+          <h2>Ingesta · mensajes y eventos</h2>
+          <span class="section-note">Validación, idempotencia y movimientos de saldo</span>
+        </div>
+        <article class="panel">
+          <div id="ingestion-details" class="data-list compact">
+            <div class="empty">Los eventos aparecerán al completar la simulación.</div>
+          </div>
+        </article>
+      </section>
+
+      <section class="columns" aria-label="Detalle de liquidación y validaciones">
+        <article class="panel">
+          <div class="panel-title">
+            <h2>Compensación multilateral</h2>
+            <span id="strategy-badge" class="badge">Estrategia —</span>
+          </div>
+          <div class="data-list" id="settlement-details"></div>
+        </article>
+        <article class="panel">
+          <div class="panel-title">
+            <h2>Invariantes del sistema</h2>
+            <span id="invariant-count" class="badge">—</span>
+          </div>
+          <div id="invariant-list" class="invariants">
+            <div class="empty">Las validaciones aparecerán al completar la simulación.</div>
+          </div>
+        </article>
+      </section>
+
+      <section>
+        <div class="section-heading">
+          <h2>Fase 1 · Compensación de flujos</h2>
+          <span class="section-note">Neteo bilateral y detección de circuitos</span>
+        </div>
+        <article class="panel">
+          <div class="data-list" id="phase-details"></div>
+        </article>
+      </section>
+
+      <section>
+        <div class="section-heading">
+          <h2>Cooperativas con obligaciones aplazadas</h2>
+          <span class="section-note">Principales bloqueadores identificados</span>
+        </div>
+        <article class="panel table-wrap">
+          <table>
+            <thead>
+              <tr><th>Cooperativa</th><th>Pagos aplazados</th><th>Monto aplazado</th><th>Disponible</th><th>Faltante</th></tr>
+            </thead>
+            <tbody id="blocker-list"><tr><td colspan="5" class="empty">Los bloqueadores aparecerán al completar la simulación.</td></tr></tbody>
+          </table>
+        </article>
+      </section>
+
+      <section>
+        <div class="section-heading">
+          <h2>Actividad del motor</h2>
+          <span class="section-note">Tiempos medidos por fase en milisegundos</span>
+        </div>
+        <article class="panel">
+          <div class="data-list" id="runtime-details"></div>
+        </article>
+      </section>
+
+      <section>
+        <div class="section-heading">
+          <h2>Cómo funciona</h2>
+          <span class="section-note">Flujo de procesamiento implementado</span>
+        </div>
+        <div class="pipeline">
+          <article class="panel step">
+            <div class="step-number">01 · GENERACIÓN</div>
+            <h3>Red y operaciones</h3>
+            <p>Genera operaciones reproducibles y depósitos de liquidez para la red de cooperativas.</p>
+          </article>
+          <article class="panel step">
+            <div class="step-number">02 · INGESTA</div>
+            <h3>Validación de mensajes</h3>
+            <p>Procesa altas, duplicados, cancelaciones, reversos y movimientos de saldo.</p>
+          </article>
+          <article class="panel step">
+            <div class="step-number">03 · COMPENSACIÓN</div>
+            <h3>Neteo y liquidación</h3>
+            <p>Ordena una fotografía del grafo, compensa flujos y prioriza obligaciones con la estrategia B.</p>
+          </article>
+          <article class="panel step">
+            <div class="step-number">04 · AUDITORÍA</div>
+            <h3>Invariantes y huella</h3>
+            <p>Verifica conservación de saldos, posiciones netas y ejecuciones únicas; calcula una huella reproducible.</p>
+          </article>
+        </div>
+      </section>
+
+      <section>
+        <div class="section-heading">
+          <h2>Diagnóstico técnico</h2>
+          <span class="section-note">Respuesta completa del servicio</span>
+        </div>
+        <article class="panel details-panel">
+          <details>
+            <summary>Ver datos JSON de la simulación</summary>
+            <pre id="raw-result">Ejecuta la simulación para consultar la respuesta completa.</pre>
+          </details>
+        </article>
+      </section>
+    </main>
+
+    <footer>
+      <div class="shell footer-content">
+        <span>Motor de compensación · Node.js <span id="node-version">—</span></span>
+        <span>API: <a href="/api/simulacion?limite=1200">/api/simulacion</a> · <a href="/api/health">/api/health</a></span>
+      </div>
+    </footer>
+
+    <script type="module">
+      const number = new Intl.NumberFormat('es-CO', { maximumFractionDigits: 0 });
+      const decimal = new Intl.NumberFormat('es-CO', { maximumFractionDigits: 2 });
+      const money = (value) => number.format(Number(value) || 0);
+      const milliseconds = (value) => `${decimal.format(Number(value) || 0)} ms`;
+      const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      })[char]);
+
+      function setServiceState(label, state) {
+        document.getElementById('service-label').textContent = label;
+        document.getElementById('state-dot').className = `state-dot ${state}`;
+      }
+
+      function dataRows(entries) {
+        return entries.map(([label, value]) =>
+          `<div class="data-row"><span class="data-label">${escapeHtml(label)}</span><span class="data-value">${escapeHtml(value)}</span></div>`
+        ).join('');
+      }
+
+      function renderResult(result) {
+        const { stats, resumen, fase1, invariantes, bloqueadores, tiempos } = result;
+        document.getElementById('metric-messages').textContent = money(stats.mensajes);
+        document.getElementById('metric-messages-foot').textContent = `${money(result.n)} operaciones generadas · ${money(stats.depositos)} depósitos`;
+        document.getElementById('metric-executed').textContent = money(resumen.ejecutadas);
+        document.getElementById('metric-executed-foot').textContent = `${money(resumen.p1.cumplidas)} de ${money(resumen.p1.total)} pagos prioritarios cumplidos`;
+        document.getElementById('metric-settled').textContent = money(resumen.montoLiquidado);
+        document.getElementById('metric-postponed').textContent = money(resumen.aplazadas);
+        document.getElementById('metric-postponed-foot').textContent = `${money(resumen.urgentes.cumplidas)} de ${money(resumen.urgentes.total)} pagos urgentes cumplidos`;
+        document.getElementById('run-meta').textContent = `Ejecución determinista · huella ${result.huellas} · Node ${result.node}`;
+        document.getElementById('strategy-badge').textContent = `Estrategia ${resumen.estrategia}`;
+        document.getElementById('ingestion-details').innerHTML = dataRows([
+          ['Altas procesadas', money(stats.altas)],
+          ['Duplicados detectados', money(stats.duplicados)],
+          ['Operaciones rechazadas', money(stats.rechazadas)],
+          ['Cancelaciones aplicadas', money(stats.cancelaciones)],
+          ['Cancelaciones tardías', money(stats.cancelTardias)],
+          ['Reversos registrados', money(stats.reversos)],
+          ['Lápidas de idempotencia', money(stats.lapidas)],
+          ['Depósitos de liquidez', money(stats.depositos)],
+          ['Monto total de depósitos', money(stats.montoDepositos)],
+          ['Mensajes recibidos', money(stats.mensajes)]
+        ]);
+
+        const bruto = Number(fase1.flujoBruto) || 0;
+        const eliminado = Number(fase1.montoEliminado) || 0;
+        const porcentaje = bruto > 0 ? Math.min(100, eliminado / bruto * 100) : 0;
+        document.getElementById('settlement-details').innerHTML =
+          `<div class="data-row"><span class="data-label">Flujo bruto inicial</span><span class="data-value">${money(bruto)}</span></div>
+           <div class="bar-track" role="img" aria-label="${decimal.format(porcentaje)}% del flujo bruto eliminado"><div class="bar-fill" style="width:${porcentaje}%"></div></div>` +
+          dataRows([
+            ['Flujo eliminado en compensación', money(eliminado)],
+            ['Pagos liquidados en fase 1', money(fase1.liquidadas)],
+            ['Liquidación bilateral', money(fase1.viaBilateral)],
+            ['Liquidación por circuitos', money(fase1.viaCircuito)],
+            ['Monto neto liquidado', money(resumen.montoLiquidado)],
+            ['Cupo de liquidez utilizado', money(resumen.cupoUsado)],
+            ['Pasadas de liquidación', money(resumen.pasadas)]
+          ]);
+
+        document.getElementById('phase-details').innerHTML = dataRows([
+          ['Flujo eliminado por neteo bilateral', money(fase1.eliminadoBilateral)],
+          ['Flujo eliminado por circuitos', money(fase1.eliminadoCircuitos)],
+          ['Pares bilaterales compensados', money(fase1.paresBilaterales)],
+          ['Circuitos encontrados', money(fase1.nCircuitos)],
+          ['Pasadas de compensación', money(fase1.pasadas)],
+          ['Componentes fuertemente conexos no triviales', money(fase1.sccNoTriviales)],
+          ['Mayor componente fuertemente conexo', money(fase1.sccMayor)],
+          ['Monto eliminado por compensación', money(fase1.montoEliminado)],
+          ['Monto liquidado en fase 1', money(fase1.liquidado)],
+          ['Pagos liquidados en fase 1', money(fase1.liquidadas)],
+          ['Liquidaciones bilaterales', money(fase1.viaBilateral)],
+          ['Liquidaciones por circuito', money(fase1.viaCircuito)],
+          ['Obligaciones retiradas en reparación', money(fase1.retiradasReparacion)],
+          ['Liquidez usada en fase 1', money(fase1.liquidezUsada)],
+          ['Obligaciones pendientes después de fase 1', money(fase1.pendientesDespues)]
+        ]);
+
+        const validas = invariantes.filter((item) => item.ok).length;
+        document.getElementById('invariant-count').textContent = `${validas}/${invariantes.length} correctas`;
+        document.getElementById('invariant-list').innerHTML = invariantes.length
+          ? invariantes.map((item) =>
+              `<div class="invariant">
+                <span class="check ${item.ok ? '' : 'fail'}">${item.ok ? '✓' : '!'}</span>
+                <div><div class="invariant-name">${escapeHtml(item.codigo)} · ${escapeHtml(item.nombre)}</div>
+                <div class="invariant-detail">${escapeHtml(item.detalle)}</div></div>
+              </div>`
+            ).join('')
+          : '<div class="empty">El motor no devolvió invariantes para esta ejecución.</div>';
+
+        document.getElementById('blocker-list').innerHTML = bloqueadores.length
+          ? bloqueadores.map((item) =>
+              `<tr><td>${escapeHtml(item.cooperativa)}</td><td>${money(item.aplazadas)}</td><td>${money(item.montoAplazado)}</td><td>${money(item.disponible)}</td><td>${money(item.faltante)}</td></tr>`
+            ).join('')
+          : '<tr><td colspan="5" class="empty">No se reportaron cooperativas bloqueadoras.</td></tr>';
+
+        document.getElementById('runtime-details').innerHTML = dataRows([
+          ['Fase 1 · Compensación de flujos', milliseconds(tiempos.fase1)],
+          ['Fase 2 · Liquidación', milliseconds(tiempos.fase2)],
+          ['Registro de movimientos', milliseconds(tiempos.registro)],
+          ['Verificación de invariantes', milliseconds(tiempos.invariantes)]
+        ]);
+        document.getElementById('node-version').textContent = result.node;
+        document.getElementById('raw-result').textContent = JSON.stringify(result, null, 2);
+      }
+
+      async function checkHealth() {
+        try {
+          const response = await fetch('/api/health', { cache: 'no-store' });
+          if (!response.ok) throw new Error(`Servicio de salud respondió HTTP ${response.status}`);
+          setServiceState('Motor disponible', 'ready');
+        } catch {
+          setServiceState('Verificando motor', '');
+        }
+      }
+
+      async function runSimulation(event) {
+        event?.preventDefault();
+        const button = document.getElementById('run-button');
+        const notice = document.getElementById('error-notice');
+        const limit = Math.min(5000, Math.max(200, Number(document.getElementById('limit').value) || 1200));
+        button.disabled = true;
+        button.textContent = 'Procesando…';
+        notice.classList.remove('visible');
+        setServiceState('Simulación en curso', '');
+
+        try {
+          const response = await fetch(`/api/simulacion?limite=${encodeURIComponent(limit)}`, { cache: 'no-store' });
+          const result = await response.json();
+          if (!response.ok || !result.ok) throw new Error(result.error || `El servicio respondió HTTP ${response.status}`);
+          renderResult(result);
+          setServiceState('Motor disponible', 'ready');
+        } catch (error) {
+          notice.textContent = `No se pudo ejecutar la simulación: ${error.message}. Comprueba que la API /api/simulacion esté desplegada.`;
+          notice.classList.add('visible');
+          setServiceState('Error de conexión', 'error');
+        } finally {
+          button.disabled = false;
+          button.textContent = 'Ejecutar simulación';
+        }
+      }
+
+      document.getElementById('run-form').addEventListener('submit', runSimulation);
+      checkHealth();
+      runSimulation();
+    </script>
+  </body>
+</html>
