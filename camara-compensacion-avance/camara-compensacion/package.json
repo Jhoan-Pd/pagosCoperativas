@@ -5,11 +5,9 @@
   "type": "module",
   "description": "Cámara de compensación de pagos entre cooperativas",
   "scripts": {
-    "start": "node server.js",
-    "test": "node --test test/",
-    "generar": "node scripts/generar.mjs",
-    "determinismo": "node scripts/determinismo.mjs",
-    "reproducir": "node scripts/reproducir.mjs"
+    "start": "node api/health.js",
+    "test": "node --test test/*.mjs",
+    "simulacion": "node -e \"import('./src/servicio/simulador.js').then(async ({generarResumen}) => console.log(JSON.stringify(await generarResumen({ limite: 200 }), null, 2)))\""
   },
   "engines": { "node": ">=20" }
 }
