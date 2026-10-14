@@ -1,0 +1,8 @@
+{
+  "name": "Cámara de compensación",
+  "short_name": "Cámara",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#efefec",
+  "theme_color": "#285f8f"
+}
